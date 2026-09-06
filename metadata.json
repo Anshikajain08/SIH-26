@@ -1,0 +1,6 @@
+{
+  "name": "Oildex - Smart Schedule-Linking Layer",
+  "description": "Intelligent Data Capture & Schedule-Linking Layer for Oil India Limited infrastructure projects. Bridges messy DPRs and field execution logs to L5/L6 Primavera baseline schedules with semantic matching, confidence scoring, planner review, and baseline vs actual Gantt analytics.",
+  "requestFramePermissions": ["microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

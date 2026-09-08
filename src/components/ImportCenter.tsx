@@ -22,6 +22,7 @@ export const ImportCenter: React.FC = () => {
   const [customText, setCustomText] = useState('');
   const [selectedDocId, setSelectedDocId] = useState<string>(documents[0]?.id || '');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [processingLabel, setProcessingLabel] = useState<string | null>(null);
   const [uploadFeedback, setUploadFeedback] = useState<string | null>(null);
   const [feedbackIsError, setFeedbackIsError] = useState(false);
 
@@ -40,6 +41,7 @@ export const ImportCenter: React.FC = () => {
   const handleScheduleUpload = async (file?: File) => {
     if (!file) return;
     setIsProcessing(true);
+    setProcessingLabel(`Reading ${file.name} into the schedule store…`);
     try {
       const result = await importSchedule(file);
       setUploadFeedback(`Schedule imported from ${file.name}: ${result.importedCount} activities stored in SQLite, ${result.skippedCount} skipped.`);
@@ -49,12 +51,14 @@ export const ImportCenter: React.FC = () => {
       setFeedbackIsError(true);
     } finally {
       setIsProcessing(false);
+      setProcessingLabel(null);
     }
   };
 
   const handleDocumentUpload = async (file?: File) => {
     if (!file) return;
     setIsProcessing(true);
+    setProcessingLabel(`Gemini is reading ${file.name} — extracting structured events and matching against the schedule (usually ~10–20s)…`);
     try {
       const result = await uploadDocument(file);
       setUploadFeedback(`${file.name} stored and processed by Gemini: ${result.events.length} events and ${result.matches.length} matches persisted.`);
@@ -64,6 +68,7 @@ export const ImportCenter: React.FC = () => {
       setFeedbackIsError(true);
     } finally {
       setIsProcessing(false);
+      setProcessingLabel(null);
     }
   };
 
@@ -71,6 +76,7 @@ export const ImportCenter: React.FC = () => {
     if (!customText.trim()) return;
 
     setIsProcessing(true);
+    setProcessingLabel('Gemini is reading your field report — extracting structured events (usually ~10–20s)…');
     try {
       const file = new File([customText], `field-report-${Date.now()}.txt`, { type: 'text/plain' });
       const result = await uploadDocument(file);
@@ -83,6 +89,8 @@ export const ImportCenter: React.FC = () => {
       setIsProcessing(false);
       setUploadFeedback(error instanceof Error ? error.message : 'Extraction failed.');
       setFeedbackIsError(true);
+    } finally {
+      setProcessingLabel(null);
     }
   };
 
@@ -124,6 +132,13 @@ export const ImportCenter: React.FC = () => {
             ? <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
             : <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />}
           <span>{uploadFeedback}</span>
+        </div>
+      )}
+
+      {isProcessing && processingLabel && (
+        <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 p-4 rounded-xl text-blue-800 text-xs font-semibold shadow-xs">
+          <Zap className="w-4 h-4 text-blue-600 animate-pulse shrink-0" />
+          <span>{processingLabel}</span>
         </div>
       )}
 

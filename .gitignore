@@ -8,3 +8,10 @@ coverage/
 .env*
 !.env.example
 oildex.sqlite
+
+# Local binaries / presentation artifacts (kept off the source branch)
+*.pdf
+*.pptx
+*.ppt
+~$*
+reset-result.json

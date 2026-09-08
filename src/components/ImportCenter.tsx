@@ -23,6 +23,7 @@ export const ImportCenter: React.FC = () => {
   const [selectedDocId, setSelectedDocId] = useState<string>(documents[0]?.id || '');
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadFeedback, setUploadFeedback] = useState<string | null>(null);
+  const [feedbackIsError, setFeedbackIsError] = useState(false);
 
   const currentDoc: SourceDocument = documents.find(d => d.id === selectedDocId) || documents[0] || {
     id: 'empty',
@@ -42,8 +43,10 @@ export const ImportCenter: React.FC = () => {
     try {
       const result = await importSchedule(file);
       setUploadFeedback(`Schedule imported from ${file.name}: ${result.importedCount} activities stored in SQLite, ${result.skippedCount} skipped.`);
+      setFeedbackIsError(false);
     } catch (error) {
       setUploadFeedback(error instanceof Error ? error.message : 'Schedule import failed.');
+      setFeedbackIsError(true);
     } finally {
       setIsProcessing(false);
     }
@@ -55,8 +58,10 @@ export const ImportCenter: React.FC = () => {
     try {
       const result = await uploadDocument(file);
       setUploadFeedback(`${file.name} stored and processed by Gemini: ${result.events.length} events and ${result.matches.length} matches persisted.`);
+      setFeedbackIsError(false);
     } catch (error) {
       setUploadFeedback(error instanceof Error ? error.message : 'Document processing failed.');
+      setFeedbackIsError(true);
     } finally {
       setIsProcessing(false);
     }
@@ -71,11 +76,13 @@ export const ImportCenter: React.FC = () => {
       const result = await uploadDocument(file);
       setIsProcessing(false);
       setUploadFeedback(`Gemini extracted ${result.events.length} event${result.events.length === 1 ? '' : 's'} and persisted ${result.matches.length} match${result.matches.length === 1 ? '' : 'es'}.`);
+      setFeedbackIsError(false);
       setCustomText('');
-      setTimeout(() => setUploadFeedback(null), 4000);
+      setTimeout(() => { setUploadFeedback(null); setFeedbackIsError(false); }, 4000);
     } catch (error) {
       setIsProcessing(false);
       setUploadFeedback(error instanceof Error ? error.message : 'Extraction failed.');
+      setFeedbackIsError(true);
     }
   };
 
@@ -108,8 +115,14 @@ export const ImportCenter: React.FC = () => {
       </div>
 
       {uploadFeedback && (
-        <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl text-emerald-800 text-xs font-semibold flex items-center gap-2 shadow-xs">
-          <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+        <div className={`p-4 rounded-xl text-xs font-semibold flex items-center gap-2 shadow-xs ${
+          feedbackIsError
+            ? 'bg-rose-50 border border-rose-200 text-rose-800'
+            : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+        }`}>
+          {feedbackIsError
+            ? <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            : <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />}
           <span>{uploadFeedback}</span>
         </div>
       )}

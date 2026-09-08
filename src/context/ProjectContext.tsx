@@ -43,10 +43,10 @@ interface ProjectContextType {
   rejectMatch: (matchId: string, reason: string) => void;
   flagUnmatched: (matchId: string, note: string) => void;
   ingestNewDocument: (doc: SourceDocument, extractedEvents: ProgressEvent[]) => void;
-  uploadDocument: (file: File) => Promise<void>;
+  uploadDocument: (file: File) => Promise<{ document: SourceDocument; events: ProgressEvent[]; matches: MatchRecord[] }>;
   importSchedule: (file: File) => Promise<{ importedCount: number; skippedCount: number; errors: string[] }>;
   processTimeAgentInput: (text: string) => { event: ProgressEvent; match: MatchRecord };
-  resetToBenchmark: () => void;
+  resetToBenchmark: () => Promise<void>;
 }
 
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
@@ -270,8 +270,9 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const uploadDocument = async (file: File) => {
-    await api.uploadDocument(file);
+    const result = await api.uploadDocument(file);
     await reloadBackend();
+    return result;
   };
 
   const importSchedule = async (file: File) => {
@@ -350,17 +351,26 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return { event: newEvent, match: newMatch };
   };
 
-  const resetToBenchmark = () => {
-    setActivities(initialActivities);
-    setDocuments(mockSourceDocuments);
-    setEvents(mockInitialEvents);
-    const refreshedMatches = mockInitialEvents.map(evt => matchEventToActivities(evt, initialActivities));
-    setMatches(refreshedMatches);
-    setAuditLogs(initialAuditLogs);
-    setDelays(initialDelayRecords);
-    setProjectInfo(mockProjectInfo);
+  const resetToBenchmark = async () => {
     setSelectedActivityId(null);
     setSelectedMatchId(null);
+    setSelectedDisciplineFilter('ALL');
+    setActiveTab('import');
+    try {
+      // Reset the persistent SQLite store to the bundled 18-activity baseline.
+      await api.resetSeed();
+      await reloadBackend();
+    } catch (error) {
+      console.error('Backend reset failed; using in-memory seed fallback.', error);
+      setActivities(initialActivities);
+      setDocuments(mockSourceDocuments);
+      setEvents(mockInitialEvents);
+      const refreshedMatches = mockInitialEvents.map(evt => matchEventToActivities(evt, initialActivities));
+      setMatches(refreshedMatches);
+      setAuditLogs(initialAuditLogs);
+      setDelays(initialDelayRecords);
+      setProjectInfo(mockProjectInfo);
+    }
   };
 
   return (

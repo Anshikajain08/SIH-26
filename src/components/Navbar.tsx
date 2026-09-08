@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Calendar, 
+  Database, 
   FileText, 
   Layers, 
-  ShieldCheck, 
-  Database
+  RefreshCw, 
+  ShieldCheck 
 } from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
 
@@ -13,8 +14,25 @@ export const Navbar: React.FC = () => {
     projectInfo, 
     activeTab, 
     setActiveTab, 
-    matches
+    matches, 
+    resetToBenchmark
   } = useProject();
+
+  const [isResetting, setIsResetting] = useState(false);
+
+  const handleReset = async () => {
+    if (isResetting) return;
+    const ok = window.confirm(
+      'Reset Oildex to the bundled 18-activity baseline?\n\nThis clears uploaded reports, extracted events, matches and the audit log (SQLite is reset to seed).'
+    );
+    if (!ok) return;
+    setIsResetting(true);
+    try {
+      await resetToBenchmark();
+    } finally {
+      setIsResetting(false);
+    }
+  };
 
   const pendingReviewCount = matches.filter(m => m.decision === 'PLANNER_REVIEW').length;
 
@@ -72,6 +90,16 @@ export const Navbar: React.FC = () => {
                 <span className="font-mono font-bold text-amber-700">{projectInfo.spi.toFixed(2)}</span>
           </div>
 
+          {/* Compact reset-to-baseline action */}
+          <button
+            onClick={() => void handleReset()}
+            disabled={isResetting}
+            title="Reset to the bundled baseline seed (clears uploaded data)"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 bg-white border border-slate-200 hover:border-amber-300 hover:text-amber-700 hover:bg-amber-50 disabled:opacity-50 transition-colors cursor-pointer"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isResetting ? 'animate-spin' : ''}`} />
+            <span>{isResetting ? 'Resetting…' : 'Reset'}</span>
+          </button>
         </div>
       </div>
 

@@ -51,7 +51,7 @@ Line 28B | 28B-H02  | 12"      | FIT-UP | 2026-09-05  | W-12      | PENDING`
     uploadedBy: 'Mukesh Gogoi (Lead Superintendent)',
     extractedEventCount: 2,
     parsingStatus: 'PARSED',
-    rawText: `VOICE LOG / DIARY TRANSCRIPTION (Whisper ASR):
+    rawText: `VOICE LOG / DIARY TRANSCRIPTION (Demo transcript):
 "Line 24A piping erection crew is still continuing alignment work at North rack. We finished spool 24A-S03 this afternoon. However, hydro test for 24A will slip by at least 1 day because TPI inspector rejected test pack weld book. Meanwhile foundation F11 pour is 100% complete and inspected."`
   }
 ];

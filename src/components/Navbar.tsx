@@ -1,19 +1,10 @@
 import React from 'react';
 import { 
-  Building2, 
   Calendar, 
-  CheckCircle2, 
-  Clock, 
   FileText, 
   Layers, 
-  Play, 
-  RotateCcw, 
   ShieldCheck, 
-  TrendingUp,
-  AlertCircle,
-  Radio,
-  Workflow,
-  Sparkles
+  Database
 } from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
 
@@ -22,28 +13,22 @@ export const Navbar: React.FC = () => {
     projectInfo, 
     activeTab, 
     setActiveTab, 
-    matches, 
-    setDemoTourActive, 
-    resetToBenchmark 
+    matches
   } = useProject();
 
   const pendingReviewCount = matches.filter(m => m.decision === 'PLANNER_REVIEW').length;
 
   const navItems = [
-    { id: 'workflow', label: 'Pipeline Workflow', icon: Workflow, highlight: true },
-    { id: 'home', label: 'Overview', icon: Building2 },
-    { id: 'import', label: 'Import Center', icon: FileText },
-    { id: 'extraction', label: 'AI Extraction', icon: Layers },
+    { id: 'import', label: 'Ingest', icon: FileText, highlight: true },
+    { id: 'extraction', label: 'Extracted Events', icon: Layers },
     { 
       id: 'review', 
       label: 'Match Review', 
       icon: ShieldCheck, 
       badge: pendingReviewCount > 0 ? pendingReviewCount : undefined 
     },
-    { id: 'gantt', label: 'Gantt Schedule', icon: Calendar },
-    { id: 'timeagent', label: 'Time Agent', icon: Radio },
-    { id: 'analytics', label: 'Analytics & Audit', icon: TrendingUp },
-    { id: 'memory', label: 'Memory & Q&A', icon: Sparkles },
+    { id: 'gantt', label: 'Schedule', icon: Calendar },
+    { id: 'audit', label: 'Audit Log', icon: Database },
   ];
 
   return (
@@ -58,7 +43,7 @@ export const Navbar: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <span className="text-[11px] font-bold tracking-wider text-blue-700 uppercase font-mono">
-                SIH 2026 • PS 26122
+                OIL INDIA LIMITED
               </span>
               <span className="text-slate-300">•</span>
               <span className="text-xs text-slate-500 font-medium">Oil India Limited</span>
@@ -73,7 +58,7 @@ export const Navbar: React.FC = () => {
           </div>
         </div>
 
-        {/* Status Indicators & Demo Tour Action */}
+        {/* Product status */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Data Cut-off Badge */}
           <div className="hidden md:flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg text-xs">
@@ -81,34 +66,12 @@ export const Navbar: React.FC = () => {
             <span className="font-mono font-semibold text-slate-800">{projectInfo.dataDate}</span>
           </div>
 
-          {/* Schedule Health SPI */}
+          {/* Schedule health */}
           <div className="hidden lg:flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg text-xs">
             <span className="text-slate-500">SPI:</span>
-            <span className="font-mono font-bold text-amber-700">0.92</span>
+                <span className="font-mono font-bold text-amber-700">{projectInfo.spi.toFixed(2)}</span>
           </div>
 
-          {/* 3-Minute SIH Demo button */}
-          <button
-            onClick={() => setDemoTourActive(true)}
-            id="btn-sih-demo-tour"
-            className="flex items-center gap-1.5 bg-blue-700 hover:bg-blue-800 text-white text-xs font-semibold px-3.5 py-2 rounded-lg transition-colors shadow-xs cursor-pointer"
-            title="Start step-by-step 3-minute interactive SIH evaluation walkthrough"
-          >
-            <Play className="w-3.5 h-3.5 fill-current" />
-            <span className="hidden sm:inline">3-Min Pitch Tour</span>
-            <span className="sm:hidden">Tour</span>
-          </button>
-
-          {/* Reset benchmark */}
-          <button
-            onClick={resetToBenchmark}
-            id="btn-reset-benchmark"
-            className="flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-900 border border-slate-200 text-xs font-medium px-3 py-2 rounded-lg transition-colors cursor-pointer"
-            title="Reset schedule and events to clean benchmark"
-          >
-            <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
-            <span className="hidden sm:inline">Reset</span>
-          </button>
         </div>
       </div>
 

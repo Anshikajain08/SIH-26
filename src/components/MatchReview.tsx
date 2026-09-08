@@ -169,13 +169,13 @@ export const MatchReview: React.FC = () => {
                   >
                     <div className="flex items-center justify-between gap-2 mb-1.5">
                       <span className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold ${
-                        m.finalConfidence >= 0.85
+                        m.combinedConfidence >= 0.85
                           ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          : m.finalConfidence >= 0.65
+                          : m.combinedConfidence >= 0.65
                           ? 'bg-amber-50 text-amber-800 border border-amber-300'
                           : 'bg-slate-100 text-slate-700'
                       }`}>
-                        {(m.finalConfidence * 100).toFixed(0)}% Match
+                        {(m.combinedConfidence * 100).toFixed(0)}% Combined
                       </span>
 
                       <span className={`text-[10px] font-semibold px-2 py-0.5 rounded ${
@@ -194,12 +194,12 @@ export const MatchReview: React.FC = () => {
                     </div>
 
                     <p className="text-xs text-slate-600 italic line-clamp-2 mb-2">
-                      "{m.rawSourceExcerpt}"
+                      "{m.event.rawTextExcerpt}"
                     </p>
 
                     <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
-                      <span>{m.discipline}</span>
-                      <span>{m.eventDate}</span>
+                      <span>{m.event.discipline}</span>
+                      <span>{m.event.eventDate}</span>
                     </div>
                   </div>
                 );
@@ -229,9 +229,12 @@ export const MatchReview: React.FC = () => {
 
                 <div className="text-right">
                   <div className="text-xl font-black font-mono text-blue-700">
-                    {(activeMatch.finalConfidence * 100).toFixed(0)}%
+                    {(activeMatch.combinedConfidence * 100).toFixed(0)}%
                   </div>
-                  <span className="text-[10px] text-slate-400 font-mono uppercase">Calculated Confidence</span>
+                  <span className="text-[10px] text-slate-400 font-mono uppercase">Combined Confidence</span>
+                  <div className="text-[10px] text-slate-500 font-mono mt-1">
+                    Match {(activeMatch.finalConfidence * 100).toFixed(0)}% · Extract {(activeMatch.extractionConfidence * 100).toFixed(0)}%
+                  </div>
                 </div>
               </div>
 
@@ -265,12 +268,12 @@ export const MatchReview: React.FC = () => {
                 {showExplainMatch && currentCandidate && (
                   <div className="space-y-2 pt-1 border-t border-blue-200/60 text-xs">
                     <p className="text-blue-950 font-medium leading-relaxed bg-white/70 p-3 rounded-lg border border-blue-200/60">
-                      <strong>AI Explanation:</strong> Matched because field statement <span className="font-semibold text-blue-900">"{activeMatch.event.rawTextExcerpt}"</span> has a <span className="font-bold text-blue-700">{((currentCandidate.semanticSimilarity ?? 0.82) * 100).toFixed(0)}% semantic vector similarity</span> to target plan task <span className="font-semibold text-slate-900">"{currentCandidate.activityName}"</span>. Both are verified in discipline <span className="font-mono font-bold text-blue-800">{currentCandidate.discipline}</span> (Area {currentCandidate.area}), and field event date ({activeMatch.event.eventDate}) legitimately coincides with the scheduled baseline window.
+                      <strong>Matching Explanation:</strong> Matched because field statement <span className="font-semibold text-blue-900">"{activeMatch.event.rawTextExcerpt}"</span> has a <span className="font-bold text-blue-700">{((currentCandidate.semanticSimilarity ?? 0) * 100).toFixed(0)}% deterministic text similarity</span> to target plan task <span className="font-semibold text-slate-900">"{currentCandidate.activityName}"</span>. Both are verified in discipline <span className="font-mono font-bold text-blue-800">{currentCandidate.discipline}</span> (Area {currentCandidate.area}), and field event date ({activeMatch.event.eventDate}) legitimately coincides with the scheduled baseline window.
                     </p>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 font-mono text-[11px]">
                       <div className="bg-white/80 p-2 rounded border border-blue-200 text-center">
-                        <span className="text-[10px] text-slate-500 block">SEMANTIC EMBEDDING</span>
+                        <span className="text-[10px] text-slate-500 block">TEXT SIMILARITY</span>
                         <span className="font-bold text-blue-700 mt-0.5 block">
                           {((currentCandidate.semanticSimilarity ?? 0.82) * 100).toFixed(0)}%
                         </span>

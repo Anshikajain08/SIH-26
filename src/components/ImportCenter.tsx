@@ -14,60 +14,69 @@ import {
   Zap 
 } from 'lucide-react';
 import { useProject } from '../context/ProjectContext';
-import { presetBenchmarkReports } from '../data/syntheticDPRs';
-import { ProgressEvent, SourceDocument } from '../types';
+import { SourceDocument } from '../types';
 
 export const ImportCenter: React.FC = () => {
-  const { documents, ingestNewDocument, setActiveTab } = useProject();
+  const { documents, uploadDocument, importSchedule, setActiveTab } = useProject();
   const [activeTab, setActiveFormatTab] = useState<'DPR' | 'SPREADSHEET' | 'CUSTOM_TEXT'>('DPR');
   const [customText, setCustomText] = useState('');
   const [selectedDocId, setSelectedDocId] = useState<string>(documents[0]?.id || '');
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadFeedback, setUploadFeedback] = useState<string | null>(null);
 
-  const currentDoc = documents.find(d => d.id === selectedDocId) || documents[0];
+  const currentDoc: SourceDocument = documents.find(d => d.id === selectedDocId) || documents[0] || {
+    id: 'empty',
+    fileName: 'No report uploaded',
+    type: 'DPR_TXT',
+    discipline: 'MULTI',
+    uploadedAt: '',
+    uploadedBy: '',
+    rawText: 'Upload a TXT or PDF report to inspect its preserved source text.',
+    extractedEventCount: 0,
+    parsingStatus: 'PENDING',
+  };
 
-  const handleProcessCustomText = () => {
+  const handleScheduleUpload = async (file?: File) => {
+    if (!file) return;
+    setIsProcessing(true);
+    try {
+      const result = await importSchedule(file);
+      setUploadFeedback(`Schedule imported from ${file.name}: ${result.importedCount} activities stored in SQLite, ${result.skippedCount} skipped.`);
+    } catch (error) {
+      setUploadFeedback(error instanceof Error ? error.message : 'Schedule import failed.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleDocumentUpload = async (file?: File) => {
+    if (!file) return;
+    setIsProcessing(true);
+    try {
+      const result = await uploadDocument(file);
+      setUploadFeedback(`${file.name} stored and processed by Gemini: ${result.events.length} events and ${result.matches.length} matches persisted.`);
+    } catch (error) {
+      setUploadFeedback(error instanceof Error ? error.message : 'Document processing failed.');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleProcessCustomText = async () => {
     if (!customText.trim()) return;
 
     setIsProcessing(true);
-    setTimeout(() => {
-      const newDocId = `DOC-CUSTOM-${Date.now()}`;
-      const newDoc: SourceDocument = {
-        id: newDocId,
-        fileName: 'User_Uploaded_Site_Report.txt',
-        type: 'DPR_TXT',
-        discipline: 'MULTI',
-        uploadedAt: new Date().toISOString().replace('T', ' ').slice(0, 16) + ' IST',
-        uploadedBy: 'Site Engineer (Manual Ingestion)',
-        rawText: customText,
-        extractedEventCount: 2,
-        parsingStatus: 'PARSED',
-      };
-
-      const extracted: ProgressEvent[] = [
-        {
-          id: `EVT-USR-${Date.now()}-1`,
-          sourceDocId: newDocId,
-          sourceType: 'User Report (TXT)',
-          rawTextExcerpt: customText.slice(0, 150),
-          normalizedActivityText: 'Field progress entry parsed from custom user report',
-          discipline: customText.toLowerCase().includes('civil') || customText.toLowerCase().includes('pour') ? 'CIVIL' : 'PIPING',
-          action: 'PROGRESS UPDATE',
-          objectOrTag: customText.toLowerCase().includes('24a') ? 'Line 24A' : 'Plant Package',
-          eventDate: '2026-09-05',
-          status: 'IN_PROGRESS',
-          difficulty: 'PARAPHRASED',
-          groundTruthActivityId: 'ACT-PIP-024',
-        },
-      ];
-
-      ingestNewDocument(newDoc, extracted);
+    try {
+      const file = new File([customText], `field-report-${Date.now()}.txt`, { type: 'text/plain' });
+      const result = await uploadDocument(file);
       setIsProcessing(false);
-      setUploadFeedback('Document successfully parsed into 2 ProgressEvents and routed to AI Extraction!');
+      setUploadFeedback(`Gemini extracted ${result.events.length} event${result.events.length === 1 ? '' : 's'} and persisted ${result.matches.length} match${result.matches.length === 1 ? '' : 'es'}.`);
       setCustomText('');
       setTimeout(() => setUploadFeedback(null), 4000);
-    }, 600);
+    } catch (error) {
+      setIsProcessing(false);
+      setUploadFeedback(error instanceof Error ? error.message : 'Extraction failed.');
+    }
   };
 
   return (
@@ -105,6 +114,19 @@ export const ImportCenter: React.FC = () => {
         </div>
       )}
 
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <label className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs cursor-pointer hover:border-blue-400">
+          <span className="text-xs font-bold text-slate-900 block">Import schedule to SQLite</span>
+          <span className="text-[11px] text-slate-500 block mt-1">CSV or XLSX with activity ID, name, planned dates, and optional discipline.</span>
+          <input type="file" accept=".csv,.xlsx" className="mt-3 block w-full text-xs" disabled={isProcessing} onChange={event => { void handleScheduleUpload(event.target.files?.[0]); event.currentTarget.value = ''; }} />
+        </label>
+        <label className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs cursor-pointer hover:border-blue-400">
+          <span className="text-xs font-bold text-slate-900 block">Upload DPR / field report</span>
+          <span className="text-[11px] text-slate-500 block mt-1">TXT or text-based PDF. Scanned PDFs require OCR and are rejected.</span>
+          <input type="file" accept=".txt,.pdf" className="mt-3 block w-full text-xs" disabled={isProcessing} onChange={event => { void handleDocumentUpload(event.target.files?.[0]); event.currentTarget.value = ''; }} />
+        </label>
+      </div>
+
       {/* Format Selector Tabs */}
       <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs">
         <div className="flex flex-wrap gap-2">
@@ -117,7 +139,7 @@ export const ImportCenter: React.FC = () => {
             }`}
           >
             <FileText className="w-4 h-4" />
-            <span>Daily Progress Reports (PDF/Text)</span>
+                  <span>Report Files (PDF/TXT)</span>
           </button>
 
           <button
@@ -129,7 +151,7 @@ export const ImportCenter: React.FC = () => {
             }`}
           >
             <FileSpreadsheet className="w-4 h-4" />
-            <span>Contractor Discipline Sheets (Excel)</span>
+                  <span>Schedule Files (CSV/XLSX)</span>
           </button>
 
           <button
@@ -141,7 +163,7 @@ export const ImportCenter: React.FC = () => {
             }`}
           >
             <Plus className="w-4 h-4" />
-            <span>Paste / Upload New Field Log</span>
+                  <span>Paste Field Report</span>
           </button>
         </div>
       </div>
@@ -209,10 +231,10 @@ export const ImportCenter: React.FC = () => {
 
               <div className="flex justify-end gap-2">
                 <button
-                  onClick={() => setCustomText('Spool erection completed for Line 24A today at Unit 01. Hydrotest pack pending review.')}
+                  onClick={() => setCustomText('')}
                   className="px-3 py-2 text-xs font-medium text-slate-600 hover:bg-slate-100 border border-slate-200 rounded-lg cursor-pointer"
                 >
-                  Load Sample Line 24A
+                  Clear
                 </button>
                 <button
                   onClick={handleProcessCustomText}

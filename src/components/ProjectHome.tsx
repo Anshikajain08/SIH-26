@@ -49,7 +49,7 @@ export const ProjectHome: React.FC = () => {
               {projectInfo.name}
             </h2>
             <p className="text-xs sm:text-sm text-slate-600 max-w-3xl leading-relaxed">
-              Real-time planning-to-execution synchronization. Ingests messy daily progress reports (DPRs), site diaries, and contractor spreadsheets, maps them to L5/L6 Primavera baseline activities using BGE-M3 semantic matching, and updates actual progress with planner governance.
+              Real-time planning-to-execution synchronization. Ingests field reports, extracts structured events with Gemini, maps them to baseline activities using deterministic text matching, and updates actual progress with planner governance.
             </p>
           </div>
 
@@ -81,16 +81,16 @@ export const ProjectHome: React.FC = () => {
           </div>
           <div className="flex items-baseline gap-2 mb-1">
             <span className="text-2xl font-bold text-slate-900">
-              {projectInfo.actualProgress}%
+              {projectInfo.overallActualProgress}%
             </span>
             <span className="text-xs text-slate-500 font-medium">
-              vs {projectInfo.plannedProgress}% Plan
+              vs {projectInfo.overallPlannedProgress}% Plan
             </span>
           </div>
           <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden mt-3">
             <div
               className="bg-emerald-600 h-2 rounded-full"
-              style={{ width: `${projectInfo.actualProgress}%` }}
+              style={{ width: `${projectInfo.overallActualProgress}%` }}
             />
           </div>
           <span className="text-[11px] text-amber-700 font-medium mt-2 block">

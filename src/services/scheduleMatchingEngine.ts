@@ -1,6 +1,6 @@
 import { Activity, CandidateActivityMatch, MatchDecision, MatchRecord, ProgressEvent } from '../types';
 
-// Engineering synonyms dictionary for semantic expansion (BGE-M3 style semantic mapping)
+// Engineering synonym dictionary for deterministic text-similarity expansion.
 const SYNONYM_CLUSTERS: Record<string, string[]> = {
   erect: ['erect', 'erection', 'install', 'installation', 'placement', 'mount', 'alignment', 'spool', 'line'],
   hydrotest: ['hydrotest', 'ht', 'pressure test', 'hydro test', 'pressure certification', 'leak testing'],
@@ -131,14 +131,25 @@ export function computeKeywordEntityScore(event: ProgressEvent, activity: Activi
  * Master Schedule-Linking Matching Pipeline
  * Implements PS 26122 formula:
  * final_score = 0.65 * semantic + 0.20 * metadata + 0.15 * keyword
+ *
+ * An optional semanticOverride may supply an embedding-based cosine score (0..1)
+ * for the semantic component. When it returns undefined, the built-in
+ * deterministic token similarity is used as a fallback.
  */
-export function matchEventToActivities(event: ProgressEvent, activities: Activity[]): MatchRecord {
+export function matchEventToActivities(
+  event: ProgressEvent,
+  activities: Activity[],
+  semanticOverride?: (event: ProgressEvent, activity: Activity) => number | undefined,
+): MatchRecord {
   // Step 1: Filter candidate activities (hard discipline or general pool)
   const candidates: CandidateActivityMatch[] = activities.map(activity => {
-    const semantic = computeSemanticSimilarity(
+    const fallbackSemantic = computeSemanticSimilarity(
       event.normalizedActivityText + ' ' + event.rawTextExcerpt,
       activity.name + ' ' + activity.discipline + ' ' + activity.area
     );
+    const semantic = semanticOverride
+      ? (semanticOverride(event, activity) ?? fallbackSemantic)
+      : fallbackSemantic;
     const metadata = computeMetadataScore(event, activity);
     const keyword = computeKeywordEntityScore(event, activity);
 
@@ -187,19 +198,21 @@ export function matchEventToActivities(event: ProgressEvent, activities: Activit
   const topCandidates = candidates.slice(0, 3);
   const bestCandidate = topCandidates[0];
   const finalConfidence = bestCandidate ? bestCandidate.finalConfidence : 0;
+  const extractionConfidence = event.extractionConfidence ?? 1;
+  const combinedConfidence = Number((finalConfidence * extractionConfidence).toFixed(3));
 
   // Threshold Decision Policy (Page 8 Section 7.2)
   let decision: MatchDecision;
   let isAutoLinked = false;
 
-  if (finalConfidence >= 0.85) {
+  if (finalConfidence >= 0.85 && extractionConfidence >= 0.85) {
     decision = 'AUTO_PROPOSED';
     // If ground truth or high certainty, can auto-accept or propose
-    if (finalConfidence >= 0.90 && event.difficulty === 'EASY') {
+    if (finalConfidence >= 0.90 && extractionConfidence >= 0.90 && event.difficulty === 'EASY') {
       decision = 'AUTO_ACCEPTED';
       isAutoLinked = true;
     }
-  } else if (finalConfidence >= 0.65) {
+  } else if (combinedConfidence >= 0.65) {
     // Ambiguous bucket (e.g. Line 24A spool erection)
     decision = 'PLANNER_REVIEW';
   } else {
@@ -214,6 +227,8 @@ export function matchEventToActivities(event: ProgressEvent, activities: Activit
     candidates: topCandidates,
     selectedCandidateId: decision !== 'UNMATCHED' ? bestCandidate?.activityId : undefined,
     finalConfidence,
+    extractionConfidence,
+    combinedConfidence,
     decision,
     isAutoLinked
   };

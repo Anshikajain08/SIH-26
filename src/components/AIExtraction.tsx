@@ -147,7 +147,10 @@ export const AIExtraction: React.FC = () => {
                 </p>
 
                 <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100">
-                  <span>Date: <strong>{evt.eventDate}</strong></span>
+                  <span className="flex items-center gap-1.5">
+                    <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 font-mono font-semibold text-[10px]">{evt.sourceType.split(' — ')[0] || 'TXT'}</span>
+                    <span>Date: <strong>{evt.eventDate}</strong></span>
+                  </span>
                   <span className="text-blue-700 font-semibold">{evt.status}</span>
                 </div>
               </div>
@@ -213,6 +216,14 @@ export const AIExtraction: React.FC = () => {
                 <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg">
                   <span className="text-[10px] text-slate-500 uppercase block font-mono">Report Format</span>
                   <span className="text-xs font-bold text-slate-900 mt-0.5 block">{currentEvent.sourceType}</span>
+                </div>
+                <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg">
+                  <span className="text-[10px] text-slate-500 uppercase block font-mono">Extraction Confidence</span>
+                  <span className="text-xs font-bold text-emerald-700 mt-0.5 block">{currentEvent.extractionConfidence == null ? 'Benchmark' : `${(currentEvent.extractionConfidence * 100).toFixed(0)}%`}</span>
+                </div>
+                <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg">
+                  <span className="text-[10px] text-slate-500 uppercase block font-mono">Extraction Provider</span>
+                  <span className="text-xs font-bold text-slate-900 mt-0.5 block">{currentEvent.extractionProvider || 'SEEDED_BENCHMARK'}</span>
                 </div>
               </div>
 

@@ -14,6 +14,7 @@ import { initialActivities, mockProjectInfo, mockWBSNodes } from '../data/mockSc
 import { mockInitialEvents, mockSourceDocuments } from '../data/syntheticDPRs';
 import { initialAuditLogs, initialDelayRecords, initialInstitutionalMemory } from '../data/analyticsAndMemory';
 import { matchEventToActivities } from '../services/scheduleMatchingEngine';
+import { api } from '../services/api';
 
 interface ProjectContextType {
   projectInfo: ProjectInfo;
@@ -42,6 +43,8 @@ interface ProjectContextType {
   rejectMatch: (matchId: string, reason: string) => void;
   flagUnmatched: (matchId: string, note: string) => void;
   ingestNewDocument: (doc: SourceDocument, extractedEvents: ProgressEvent[]) => void;
+  uploadDocument: (file: File) => Promise<void>;
+  importSchedule: (file: File) => Promise<{ importedCount: number; skippedCount: number; errors: string[] }>;
   processTimeAgentInput: (text: string) => { event: ProgressEvent; match: MatchRecord };
   resetToBenchmark: () => void;
 }
@@ -50,25 +53,39 @@ const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [projectInfo, setProjectInfo] = useState<ProjectInfo>(mockProjectInfo);
-  const [activities, setActivities] = useState<Activity[]>(initialActivities);
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [wbsNodes] = useState<WBSNode[]>(mockWBSNodes);
-  const [documents, setDocuments] = useState<SourceDocument[]>(mockSourceDocuments);
-  const [events, setEvents] = useState<ProgressEvent[]>(mockInitialEvents);
+  const [documents, setDocuments] = useState<SourceDocument[]>([]);
+  const [events, setEvents] = useState<ProgressEvent[]>([]);
   const [matches, setMatches] = useState<MatchRecord[]>([]);
-  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>(initialAuditLogs);
+  const [auditLogs, setAuditLogs] = useState<AuditLogEntry[]>([]);
   const [delays, setDelays] = useState<DelayRecord[]>(initialDelayRecords);
   const [institutionalMemory] = useState<InstitutionalMemoryItem[]>(initialInstitutionalMemory);
   
-  const [activeTab, setActiveTab] = useState<string>('home');
+  const [activeTab, setActiveTab] = useState<string>('import');
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
   const [selectedMatchId, setSelectedMatchId] = useState<string | null>(null);
   const [selectedDisciplineFilter, setSelectedDisciplineFilter] = useState<string>('ALL');
   const [demoTourActive, setDemoTourActive] = useState<boolean>(false);
 
-  // Initialize matching records on initial load
+  const reloadBackend = async () => {
+    const [nextActivities, nextDocuments, nextEvents, nextMatches, nextAuditLogs] = await Promise.all([
+      api.activities(),
+      api.documents(),
+      api.events(),
+      api.matches(),
+      api.auditLogs(),
+    ]);
+    setActivities(nextActivities);
+    setDocuments(nextDocuments);
+    setEvents(nextEvents);
+    setMatches(nextMatches);
+    setAuditLogs(nextAuditLogs);
+  };
+
+  // Load persistent state. Seeded mock data remains available for the demo/reset path.
   useEffect(() => {
-    const initialMatches = mockInitialEvents.map(evt => matchEventToActivities(evt, initialActivities));
-    setMatches(initialMatches);
+    reloadBackend().catch(error => console.error('Persistent backend unavailable:', error));
   }, []);
 
   /**
@@ -76,6 +93,12 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
    * Note: The LLM does NOT write to the schedule directly. Application logic executes this!
    */
   const approveMatch = (matchId: string, overrideCandidateId?: string, reviewNote?: string) => {
+    void api.review(matchId, overrideCandidateId ? 'override' : 'approve', { activityId: overrideCandidateId, reason: reviewNote })
+      .then(reloadBackend)
+      .catch(error => console.error('Approval failed:', error));
+    return;
+    /* Demo-only legacy state path retained below for reset/demo compatibility. */
+    /* eslint-disable no-unreachable */
     const targetMatch = matches.find(m => m.id === matchId);
     if (!targetMatch) return;
 
@@ -171,6 +194,7 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
       overallActualProgress: Number((prev.overallActualProgress + 0.4).toFixed(1)),
       spi: Number((((prev.overallActualProgress + 0.4) / prev.overallPlannedProgress)).toFixed(2)),
     }));
+    /* eslint-enable no-unreachable */
   };
 
   const overrideMatch = (matchId: string, newActivityId: string, reason: string) => {
@@ -178,6 +202,9 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const rejectMatch = (matchId: string, reason: string) => {
+    void api.review(matchId, 'reject', { reason }).then(reloadBackend).catch(error => console.error('Rejection failed:', error));
+    return;
+    /* Legacy demo-only state path. */
     setMatches(prev => prev.map(m => {
       if (m.id === matchId) {
         return {
@@ -209,6 +236,9 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const flagUnmatched = (matchId: string, note: string) => {
+    void api.review(matchId, 'unmatched', { reason: note }).then(reloadBackend).catch(error => console.error('Unmatched update failed:', error));
+    return;
+    /* Legacy demo-only state path. */
     setMatches(prev => prev.map(m => {
       if (m.id === matchId) {
         return {
@@ -237,6 +267,17 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         ...prev
       ]);
     }
+  };
+
+  const uploadDocument = async (file: File) => {
+    await api.uploadDocument(file);
+    await reloadBackend();
+  };
+
+  const importSchedule = async (file: File) => {
+    const result = await api.uploadSchedule(file);
+    await reloadBackend();
+    return result;
   };
 
   const ingestNewDocument = (doc: SourceDocument, extractedEvents: ProgressEvent[]) => {
@@ -349,6 +390,8 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
         rejectMatch,
         flagUnmatched,
         ingestNewDocument,
+        uploadDocument,
+        importSchedule,
         processTimeAgentInput,
         resetToBenchmark,
       }}

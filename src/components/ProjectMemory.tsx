@@ -51,7 +51,7 @@ export const ProjectMemory: React.FC = () => {
     {
       id: 'init-1',
       sender: 'AGENT',
-      text: "Hello! I am your Project Q&A Agent. I can query our structured PostgreSQL database and historical institutional memory to answer questions about task durations, delays, and critical path impacts.",
+      text: "Project Q&A is a demo-only local heuristic. Persistent schedule ingestion, matching, review, and audit are available through the core MVP workflow.",
       dataSource: "Oildex Institutional Database & Live P6 Synced Records",
       timestamp: "09:00 AM"
     }
@@ -86,23 +86,23 @@ export const ProjectMemory: React.FC = () => {
 
       if (q.includes('piping') && (q.includes('why') || q.includes('behind') || q.includes('delay'))) {
         simulatedSql = "SELECT activity_id, name, baseline_finish, actual_finish, variance_days FROM activities WHERE discipline = 'PIPING' AND variance_days > 0;";
-        sourceTable = "PostgreSQL Table: public.activities (Discipline: PIPING)";
+        sourceTable = "Demo source label: activity records (PIPING)";
         answerText = "Piping discipline currently shows an aggregate Schedule Performance Index (SPI) of 0.88. Key driver: Tie-in Spool Erection (ACT-PIP-031) on Line 24A incurred a +1 day variance due to field alignment adjustments and hydrotest prep. Crucially, the Oildex engine verified that this +1 day shift absorbed available total float, with zero slippage on the final milestone (ACT-MEC-050).";
       } else if (q.includes('erection') || q.includes('how long') || q.includes('duration') || q.includes('usually take')) {
         simulatedSql = "SELECT avg(actual_avg_days) as realized_dur, avg(planned_avg_days) as plan_dur, avg(variance_percent) FROM institutional_memory WHERE work_type ILIKE '%erection%';";
-        sourceTable = "PostgreSQL Table: public.institutional_memory (Closed Projects Dataset)";
+        sourceTable = "Demo source label: institutional memory";
         answerText = "Based on our institutional repository of 14 sampled historical pipeline and refinery projects, Above-ground Pipe Spool Erection averages 12.4 actual calendar days versus 9.0 planned baseline days (+37.8% historical lag). The recurring root cause is flange bolt alignment tolerance rework and crane staging delays.";
       } else if (q.includes('civil') || q.includes('foundation') || q.includes('bottleneck')) {
         simulatedSql = "SELECT work_type, top_bottleneck, key_mitigation FROM institutional_memory WHERE discipline = 'CIVIL';";
-        sourceTable = "PostgreSQL Table: public.institutional_memory (Discipline: CIVIL)";
+        sourceTable = "Demo source label: institutional memory (CIVIL)";
         answerText = "For Civil Foundations and Piling, historical data identifies monsoon waterlogging and concrete cube compressive strength test waiting as the primary bottleneck (+25.7% variance, 16.6 days realized vs 13.2 planned). The recommended planning mitigation is pre-monsoon gravel sheeting and 48-hour automated dewatering staging.";
       } else if (q.includes('spi') || q.includes('status') || q.includes('health') || q.includes('critical path')) {
         simulatedSql = "SELECT spi, cpi, count(*) as activities_count FROM project_meta JOIN activities ON project_meta.id = activities.project_id;";
-        sourceTable = "PostgreSQL Table: public.project_summary & public.activities";
+        sourceTable = "Demo source label: project summary";
         answerText = `Project "${projectInfo.name}" is operating at an overall Schedule Performance Index (SPI) of 0.92 with 6 synchronized activities. Critical path tie-in ACT-PIP-031 has been successfully committed to Primavera P6 with verified field evidence from Daily Progress Reports.`;
       } else {
         simulatedSql = "SELECT * FROM activities WHERE name ILIKE '%" + questionText.replace(/'/g, "") + "%' OR discipline ILIKE '%" + questionText.replace(/'/g, "") + "%';";
-        sourceTable = "PostgreSQL Table: public.activities & public.progress_events";
+        sourceTable = "Demo source label: activities and events";
         answerText = `I queried the project database for "${questionText}". The project schedule contains ${activities.length} tracked Primavera activities across Piping, Civil, Electrical, and Mechanical disciplines, with ${auditLogs.length} immutable audit verification records logged to date.`;
       }
 
@@ -195,12 +195,12 @@ export const ProjectMemory: React.FC = () => {
                 <div>
                   <h3 className="text-xs font-bold text-slate-900">Project Knowledge Engine</h3>
                   <span className="text-[10px] text-slate-500 font-mono">
-                    LLM tool execution → PostgreSQL database queries
+                    Demo-only local Q&A heuristic
                   </span>
                 </div>
               </div>
               <span className="px-2 py-0.5 text-[10px] font-mono bg-emerald-50 text-emerald-700 border border-emerald-200 rounded font-semibold">
-                DB Connected
+                Demo Data
               </span>
             </div>
 
@@ -317,7 +317,7 @@ export const ProjectMemory: React.FC = () => {
                 <span>How "Ask the Project" Works (PDF Tech Stack)</span>
               </div>
               <p className="text-blue-900/90 leading-relaxed text-[11px]">
-                The AI does not make up numbers from memory. Instead, it decides what database query is needed (e.g. grouped durations or delay taxonomy), the system executes that against our PostgreSQL structured tables, and returns real verified numbers back to phrase cleanly.
+                This optional Q&A surface is not part of the persistent MVP workflow. Its answers are local demo content; use Import Center and Match Review for the real Gemini-to-SQLite path.
               </p>
             </div>
           </div>

@@ -100,6 +100,9 @@ export interface ProgressEvent {
   reportedDelayReason?: string;
   difficulty: DifficultyBucket;
   groundTruthActivityId?: string; // for benchmark accuracy validation
+  extractionConfidence?: number;
+  extractionProvider?: 'GEMINI' | 'DETERMINISTIC_FALLBACK' | 'SEEDED_BENCHMARK';
+  extractionWarnings?: string[];
 }
 
 export interface CandidateActivityMatch {
@@ -128,6 +131,8 @@ export interface MatchRecord {
   candidates: CandidateActivityMatch[];
   selectedCandidateId?: string;
   finalConfidence: number;
+  extractionConfidence: number;
+  combinedConfidence: number;
   decision: MatchDecision;
   reviewedBy?: string;
   reviewedAt?: string;

@@ -67,7 +67,7 @@ export const DemoTourModal: React.FC = () => {
         const ambiguousMatch = matches.find(m => m.decision === 'PLANNER_REVIEW');
         if (ambiguousMatch) setSelectedMatchId(ambiguousMatch.id);
       },
-      pitch: 'Here is the hero intelligence layer! The report said "spool 24A-S03 erected", while Primavera says "Erect Line 24A". BGE-M3 semantic vectors + metadata rules compute a 78% confidence score.',
+      pitch: 'The report said "spool 24A-S03 erected", while the schedule says "Erect Line 24A". Deterministic text similarity, metadata rules, and keyword checks produce an explainable confidence score.',
       takeaway: 'Formula: 0.65×Semantic + 0.20×Metadata + 0.15×Keyword. Ambiguous cases (0.65-0.84) are routed safely to human review.'
     },
     {

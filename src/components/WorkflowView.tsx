@@ -61,7 +61,7 @@ export const WorkflowView: React.FC = () => {
     },
     {
       title: 'Supervisor Voice Audio Log (Cable Pulling)',
-      type: 'Time Agent Audio (Whisper Speech)',
+      type: 'Supervisor Field Text (Demo)',
       text: 'Substation 02 cable tray completed today. Pulled 120m feeder cable.',
       category: 'Auto-Proposed (Score: 0.88)',
       targetId: 'ACT-ELE-008',

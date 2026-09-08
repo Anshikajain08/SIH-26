@@ -150,8 +150,8 @@ export const ImportCenter: React.FC = () => {
         </label>
         <label className="bg-white border border-slate-200 rounded-xl p-4 shadow-xs cursor-pointer hover:border-blue-400">
           <span className="text-xs font-bold text-slate-900 block">Upload DPR / field report</span>
-          <span className="text-[11px] text-slate-500 block mt-1">TXT or text-based PDF. Scanned PDFs require OCR and are rejected.</span>
-          <input type="file" accept=".txt,.pdf" className="mt-3 block w-full text-xs" disabled={isProcessing} onChange={event => { void handleDocumentUpload(event.target.files?.[0]); event.currentTarget.value = ''; }} />
+          <span className="text-[11px] text-slate-500 block mt-1">TXT, text-PDF, or an XLSX/CSV progress sheet. Spreadsheets are parsed instantly (no AI wait).</span>
+          <input type="file" accept=".txt,.pdf,.xlsx,.csv" className="mt-3 block w-full text-xs" disabled={isProcessing} onChange={event => { void handleDocumentUpload(event.target.files?.[0]); event.currentTarget.value = ''; }} />
         </label>
       </div>
 

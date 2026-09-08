@@ -2,7 +2,9 @@ OIL INDIA LIMITED - DULIAJAN-NUMALIGARH PIPELINE PROJECT
 DAILY PROGRESS REPORT (DPR) - SHIFT A
 Date: 05-SEP-2026 | Location: North Unit | Weather: Clear
 
-PIPING: Erection of Line 24A was completed on 5 September; all spools installed and aligned.
-Hydrotest for Line 24A has not started because the test pack is pending TPI clearance.
-CIVIL: Foundation F-11 concrete pour completed, 42 cu.m M35 placed.
-ELECTRICAL: Crew pulled HT power cable Feeder-01 towards the compressor motor terminal.
+PIPING: Erection of Line 24A was completed on 5 September; all spools were installed and aligned.
+PIPING: Hydrotest for Line 24A has not started - the test pack is still awaiting TPI clearance before the crew can resume.
+CIVIL: Foundation F-11 concrete pour completed with 42 cu.m of M35 grade placed.
+ELECTRICAL: Crew pulled the HT power cable Feeder-01 towards the compressor motor terminal.
+PIPING: Re-verified flange bolt torque and alignment on the compressor discharge header spools before handover.
+CIVIL: Graded and widened the 1.5 km internal access road at North Unit (new scope).

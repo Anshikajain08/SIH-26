@@ -270,7 +270,8 @@ export const ProjectProvider: React.FC<{ children: React.ReactNode }> = ({ child
   };
 
   const uploadDocument = async (file: File) => {
-    const result = await api.uploadDocument(file);
+    const isSheet = /\.(xlsx|csv)$/i.test(file.name);
+    const result = isSheet ? await api.uploadProgress(file) : await api.uploadDocument(file);
     await reloadBackend();
     return result;
   };

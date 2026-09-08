@@ -23,6 +23,11 @@ export const api = {
     form.append('file', file);
     return request<{ document: SourceDocument; events: ProgressEvent[]; matches: MatchRecord[] }>('/api/documents', { method: 'POST', body: form });
   },
+  uploadProgress: (file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return request<{ document: SourceDocument; events: ProgressEvent[]; matches: MatchRecord[] }>('/api/import/progress', { method: 'POST', body: form });
+  },
   review: (matchId: string, action: 'approve' | 'reject' | 'override' | 'unmatched', body: { activityId?: string; reason?: string }) => request<MatchRecord>(`/api/matches/${matchId}/${action}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
   resetSeed: () => request<{ reset: boolean; activities: number }>('/api/system/reset-seed', { method: 'POST' }),
 };
